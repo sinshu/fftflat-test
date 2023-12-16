@@ -13,6 +13,9 @@ class Program
     static readonly int sampleRate = 44100;
     static readonly int bufferSize = 2048;
 
+    static readonly Color color1 = new Color(179, 162, 199, 255);
+    static readonly Color color2 = new Color(64, 49, 82, 255);
+
     static void Main()
     {
         var fftBuffer = new Complex[bufferSize];
@@ -28,7 +31,7 @@ class Program
         var barCount = screenWidth / barWidth;
         var bars = new double[barCount];
 
-        Raylib.InitWindow(screenWidth, screenHeight, "MIDI Player");
+        Raylib.InitWindow(screenWidth, screenHeight, "FftFlat demo");
 
         Raylib.InitAudioDevice();
         Raylib.SetAudioStreamBufferSizeDefault(bufferSize);
@@ -38,10 +41,11 @@ class Program
 
         Raylib.PlayAudioStream(stream);
 
-        var synthesizer = new Synthesizer("TimGM6mb.sf2", sampleRate);
+        var synthesizer = new Synthesizer("Arachno SoundFont - Version 1.0.sf2", sampleRate);
+        synthesizer.MasterVolume = 2.5F;
         var sequencer = new MidiFileSequencer(synthesizer);
-        var midiFile = new MidiFile(@"C:\Windows\Media\flourish.mid");
-        sequencer.Play(midiFile, true);
+        var midiFile = new MidiFile("demo_song_for_arachno_soundfont.mid");
+        sequencer.Play(midiFile, false);
 
         Raylib.SetTargetFPS(60);
 
@@ -62,19 +66,22 @@ class Program
             }
 
             Raylib.BeginDrawing();
-            Raylib.ClearBackground(Raylib.LIGHTGRAY);
-            Raylib.DrawText("FftFlat - A reasonably fast FFT in pure C#", 255, 200, 20, Raylib.DARKGRAY);
+            Raylib.ClearBackground(color2);
+            Raylib.DrawText("FftFlat - A fast FFT in pure C#", 90, 150, 50, color1);
 
+            var prevIndex = 0;
             for (var i = 0; i < barCount; i++)
             {
+                var a = (double)i / barCount * 0.8;
                 var sum = 0.0;
-                var startIndex = i * barWidth;
-                var endIndex = startIndex + barWidth;
-                for (var j = startIndex; j < endIndex; j++)
+                var index = (int)((bufferSize / 2) * Math.Pow(0.9 * a + 0.1, 2));
+                for (var j = prevIndex; j <= index; j++)
                 {
                     sum += fftBuffer[j].Magnitude;
                 }
-                var b = 100 * Math.Log10(sum / barWidth + 0.000001) + 300;
+                prevIndex = index;
+
+                var b = 200 * Math.Log10(sum / barWidth + 0.000001) + 300;
                 if (b > bars[i])
                 {
                     bars[i] = 0.5 * bars[i] + 0.5 * b;
@@ -84,7 +91,7 @@ class Program
                     bars[i] = 0.95 * bars[i] + 0.05 * b;
                 }
                 var h = (int)bars[i];
-                Raylib.DrawRectangle(startIndex, screenHeight - h, barWidth, h, Raylib.RED);
+                Raylib.DrawRectangle(i * barWidth, screenHeight - h, barWidth, h, color1);
             }
 
             Raylib.EndDrawing();
