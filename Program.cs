@@ -62,7 +62,7 @@ class Program
                     var s2 = buffer[2 * i + 1] / 65536.0;
                     fftBuffer[i] = window[i] * (s1 + s2);
                 }
-                fft.ForwardInplace(fftBuffer);
+                fft.Forward(fftBuffer);
             }
 
             Raylib.BeginDrawing();
